@@ -1,8 +1,8 @@
 package org.service.notificationservice.service;
 
-import org.service.notificationservice.event.OrderPlacedEvent;
+import org.service.notificationservice.event.NotificationEvent;
 
 public interface NotificationService {
 
-    void listen(OrderPlacedEvent orderPlacedEvent);
+    void listen(NotificationEvent event, String topic);
 }

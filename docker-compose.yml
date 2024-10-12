@@ -1,0 +1,9 @@
+version: '4'
+
+services:
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "8025:8025"   # Web UI for MailHog
+      - "1025:1025"   # SMTP server
