@@ -1,8 +1,9 @@
 package org.service.notificationservice.service;
 
-import org.service.notificationservice.event.NotificationEvent;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 public interface NotificationService {
 
-    void listen(NotificationEvent event, String topic);
+    void listen(ConsumerRecord<String, String> record);
+
 }
