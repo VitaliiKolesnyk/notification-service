@@ -58,17 +58,21 @@ public class NotificationServiceImpl implements NotificationService {
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage);
             messageHelper.setFrom(emailFrom);
             messageHelper.setTo(orderEvent.getEmail());
-            messageHelper.setSubject(String.format("Order %s received", orderEvent.getOrderNumber()));
+            messageHelper.setSubject(String.format("Order %s %s", orderEvent.getOrderNumber(), orderEvent.getStatus().equals("Placed") ? "received" : "cancelled"));
+            String body = orderEvent.getStatus().equals("Placed")
+                    ? String.format("Your Order %s was received and currently is being processed.", orderEvent.getOrderNumber())
+                    : String.format("Your Order %s was cancelled", orderEvent.getOrderNumber());
+
             messageHelper.setText(String.format("""
                     Dear %s,
                     
-                    Your Order %s was received and currently is being processed.
+                    %s
                     
                     Thank you.
                     
                     Best regards,
                     AppleShop
-                    """, orderEvent.getName(), orderEvent.getOrderNumber()));
+                    """, orderEvent.getName(), body));
         };
         try {
             javaMailSender.send(messagePreparator);

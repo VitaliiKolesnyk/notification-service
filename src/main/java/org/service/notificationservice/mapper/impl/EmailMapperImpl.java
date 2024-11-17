@@ -18,7 +18,8 @@ public class EmailMapperImpl implements EmailMapper {
 
     @Override
     public EmailResponse mapToResponse(Email email) {
-        return new EmailResponse(email.getEmailId(), email.getSubject(), email.getEmail(), email.getStatus(), email.getTimestamp());
+        return new EmailResponse(email.getEmailId(), email.getSubject(),
+                email.getEmail(), email.getStatus(), email.getTimestamp(), email.getLastReplyFrom(), email.getLastReplyAt());
     }
 
     @Override

@@ -43,6 +43,8 @@ public class ContactServiceImpl implements ContactService {
         newEmail.setTimestamp(LocalDateTime.now());
         newEmail.setStatus(Status.OPEN);
         newEmail.setUserId(contactRequest.userId());
+        newEmail.setLastReplyFrom(LastReplyFrom.USER);
+        newEmail.setLastReplyAt(LocalDateTime.now());
 
        return emailMapper.mapToResponse(emailRepository.save(newEmail));
     }
@@ -81,6 +83,8 @@ public class ContactServiceImpl implements ContactService {
 
         reply.setEmail(email);
         email.getReplies().add(reply);
+        email.setLastReplyFrom(contactRequest.isAdmin() ? LastReplyFrom.ADMIN : LastReplyFrom.USER);
+        email.setLastReplyAt(LocalDateTime.now());
 
         emailRepository.save(email);
 
