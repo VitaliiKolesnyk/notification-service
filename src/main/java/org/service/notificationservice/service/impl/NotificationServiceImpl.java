@@ -35,25 +35,33 @@ public class NotificationServiceImpl implements NotificationService {
         String topic = record.topic();
         String message = record.value();
 
+        log.info("Received message from Kafka topic '{}': {}", topic, message);
+
         switch (topic) {
             case "order-topic":
                 OrderEvent orderEvent = deserialize(message, OrderEvent.class);
+                log.info("Deserialized OrderEvent: {}", orderEvent);
                 handleOrderPlacedEvent(orderEvent);
                 break;
             case "inventory-limit-topic":
                 LimitExceedEvent limitExceedEvent = deserialize(message, LimitExceedEvent.class);
+                log.info("Deserialized LimitExceedEvent: {}", limitExceedEvent);
                 handleLimitExceedEvent(limitExceedEvent);
                 break;
             case "payment-events":
                 PaymentEvent paymentEvent = deserialize(message, PaymentEvent.class);
+                log.info("Deserialized PaymentEvent: {}", paymentEvent);
                 handlePaymentEvent(paymentEvent);
                 break;
             default:
+                log.error("Unknown topic: {}", topic);
                 throw new IllegalArgumentException("Unknown topic: " + topic);
         }
     }
 
-    private void handleOrderPlacedEvent(OrderEvent orderEvent){
+    private void handleOrderPlacedEvent(OrderEvent orderEvent) {
+        log.info("Handling OrderPlacedEvent for order number: {}", orderEvent.getOrderNumber());
+
         MimeMessagePreparator messagePreparator = mimeMessage -> {
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage);
             messageHelper.setFrom(emailFrom);
@@ -83,7 +91,9 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-    private void handleLimitExceedEvent(LimitExceedEvent limitExceedEvent){
+    private void handleLimitExceedEvent(LimitExceedEvent limitExceedEvent) {
+        log.info("Handling LimitExceedEvent for SKU code: {}", limitExceedEvent.getSkuCode());
+
         MimeMessagePreparator messagePreparator = mimeMessage -> {
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage);
             messageHelper.setFrom(emailFrom);
@@ -109,7 +119,9 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-    private void handlePaymentEvent(PaymentEvent paymentEvent){
+    private void handlePaymentEvent(PaymentEvent paymentEvent) {
+        log.info("Handling PaymentEvent for order number: {}", paymentEvent.orderNumber());
+
         MimeMessagePreparator messagePreparator = mimeMessage -> {
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage);
             messageHelper.setFrom(emailFrom);
@@ -138,8 +150,11 @@ public class NotificationServiceImpl implements NotificationService {
     private <T> T deserialize(String json, Class<T> targetType) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return objectMapper.readValue(json, targetType);
+            T result = objectMapper.readValue(json, targetType);
+            log.info("Deserialized message to {}: {}", targetType.getSimpleName(), result);
+            return result;
         } catch (JsonProcessingException e) {
+            log.error("Failed to deserialize JSON message: {}", json, e);
             throw new RuntimeException("Failed to deserialize JSON message", e);
         }
     }

@@ -36,6 +36,8 @@ public class ContactServiceImpl implements ContactService {
 
     @Override
     public EmailResponse saveContactMessage(ContactRequest contactRequest) {
+        log.info("Start - Saving contact message from user: {}", contactRequest.userId());
+
         Email newEmail = new Email();
         newEmail.setEmail(contactRequest.email());
         newEmail.setSubject(contactRequest.subject());
@@ -46,26 +48,39 @@ public class ContactServiceImpl implements ContactService {
         newEmail.setLastReplyFrom(LastReplyFrom.USER);
         newEmail.setLastReplyAt(LocalDateTime.now());
 
+        log.info("Successfully saved contact message for user: {}", contactRequest.userId());
+
        return emailMapper.mapToResponse(emailRepository.save(newEmail));
     }
 
     public List<EmailResponse> getEmails(String userId) {
+        log.info("Start - Retrieving emails for userId: {}", userId);
+
+        List<EmailResponse> emails;
         if (userId != null && !userId.isEmpty()) {
-            return emailMapper.map(emailRepository.findAllByUserId(userId));
+            emails = emailMapper.map(emailRepository.findAllByUserId(userId));
+        } else {
+            emails = emailMapper.map(emailRepository.findAll());
         }
 
-        return emailMapper.map(emailRepository.findAll());
+        log.info("Successfully retrieved {} emails for userId: {}", emails.size(), userId);
+        return emails;
     }
 
     public EmailResponseWithReplies getEmail(Long id) {
-        Email email = emailRepository.findById(id).
-                orElseThrow(() -> new RuntimeException("Email not found"));
+        log.info("Start - Retrieving email with ID: {}", id);
 
+        Email email = emailRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+
+        log.info("Successfully retrieved email with ID: {}", id);
         return emailMapper.map(email);
     }
 
     @Override
     public void reply(Long emailId, ContactRequest contactRequest) {
+        log.info("Start - Replying to email with ID: {}", emailId);
+
         Email email = emailRepository.findById(emailId).orElseThrow(
                 () -> new RuntimeException("Email not found")
         );
@@ -88,25 +103,38 @@ public class ContactServiceImpl implements ContactService {
 
         emailRepository.save(email);
 
+        log.info("Successfully replied to email with ID: {}", emailId);
+
         //sendEmail(reply.getSubject(), reply.getBody(), emailFrom, reply.getFromEmail());
     }
 
     @Override
     public EmailResponse update(Long id, EmailUpdateRequest emailUpdateRequest) {
-        Email email = emailRepository.findById(id).
-                orElseThrow(() -> new RuntimeException("Email not found"));
+        log.info("Start - Updating email with ID: {}", id);
+
+        Email email = emailRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
 
         email.setStatus(emailUpdateRequest.status());
 
-        return emailMapper.mapToResponse(emailRepository.save(email));
+        EmailResponse emailResponse = emailMapper.mapToResponse(emailRepository.save(email));
+
+        log.info("Successfully updated email status with ID: {}", id);
+        return emailResponse;
     }
 
     @Override
     public void delete(Long id) {
+        log.info("Start - Deleting email with ID: {}", id);
+
         emailRepository.deleteById(id);
+
+        log.info("Successfully deleted email with ID: {}", id);
     }
 
     private void sendEmail(String subject, String body, String emailFrom, String emailTo) {
+        log.info("Start - Sending email to: {}", emailTo);
+
         MimeMessagePreparator messagePreparator = mimeMessage -> {
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage);
             messageHelper.setFrom(emailFrom);
@@ -114,11 +142,12 @@ public class ContactServiceImpl implements ContactService {
             messageHelper.setSubject(subject);
             messageHelper.setText(body);
         };
+
         try {
             javaMailSender.send(messagePreparator);
-            log.info("Contact email to {} was sent", emailTo);
+            log.info("Contact email to {} was sent successfully", emailTo);
         } catch (MailException e) {
-            log.error("Exception occurred when sending mail", e);
+            log.error("Exception occurred when sending mail to {}: {}", emailTo, e.getMessage(), e);
             throw new RuntimeException("Exception occurred when sending mail", e);
         }
     }
